@@ -61,7 +61,7 @@ export default class PcLintProvider implements vscode.CodeActionProvider {
                         return;
                     }
     
-                    var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note).([0-9]*):.(.*)/gm;
+                    var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/gm;
                     var result = re.exec(line);
                     if (result !== null && result.length > 5) {
                         let uri = vscode.Uri.file(result[1]).fsPath;
@@ -79,7 +79,7 @@ export default class PcLintProvider implements vscode.CodeActionProvider {
                                 severity = vscode.DiagnosticSeverity.Warning;
                                 break;
                         }
-                        let range = new vscode.Range(lineNumber - 1, 0, lineNumber, 0);
+                        let range = lineNumber <= 0 ? new vscode.Range(0, 0, 1, 0) : new vscode.Range(lineNumber - 1, 0, lineNumber, 0);
 						let diagnostic = new vscode.Diagnostic(range,message,severity);
 						if (diagnostics.has(uri)) {
 							diagnostics.get(uri)?.push(diagnostic);

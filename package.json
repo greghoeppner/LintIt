@@ -3,7 +3,7 @@
 	"displayName": "Lint It",
 	"description": "Lint parser for PC-Lint",
 	"publisher": "greghoeppner",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"repository": {
 		"type": "git",
 		"url": "git@github.com:greghoeppner/LintIt.git"

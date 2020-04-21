@@ -9,8 +9,9 @@ export function activate(context: vscode.ExtensionContext) {
 	linter.activate(context.subscriptions);
 	vscode.languages.registerCodeActionsProvider('c', linter);
 
+	var channel = vscode.window.createOutputChannel('Lint It');
+
 	let disposable = vscode.commands.registerCommand('lintIt.execute', () => {
-		var channel = vscode.window.createOutputChannel('Lint It');
 		channel.show();
 		channel.clear();
 		vscode.workspace.saveAll();
