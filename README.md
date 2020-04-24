@@ -37,6 +37,10 @@ None at this time.
 
 ## Release Notes
 
+### 0.0.3
+
+- Fixed repository path.
+
 ### 0.0.2
 
 - Fixed the creation of the output channel.
