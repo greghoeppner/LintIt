@@ -64,7 +64,10 @@ export default class PcLintProvider implements vscode.CodeActionProvider {
                     var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/gm;
                     var result = re.exec(line);
                     if (result !== null && result.length > 5) {
-                        let uri = vscode.Uri.file(result[1]).fsPath;
+						let uri = vscode.Uri.file(result[1]).fsPath;
+						if (uri === "\\") {
+							uri = textDocument.uri.fsPath;
+						}
                         let lineNumber = Number.parseInt(result[2]);
                         let errorType = result[3];
                         let errorCode = result[4];

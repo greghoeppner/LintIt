@@ -37,6 +37,10 @@ None at this time.
 
 ## Release Notes
 
+### 0.0.4
+
+- Fixed issue where the path is blank.
+
 ### 0.0.3
 
 - Fixed repository path.
