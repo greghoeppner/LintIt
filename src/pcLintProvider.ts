@@ -99,12 +99,7 @@ export default class PcLintProvider implements vscode.CodeActionProvider {
 	}
 	
 	public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.Command[] {
-		let diagnostic:vscode.Diagnostic = context.diagnostics[0];
-		return [{
-			title: "Accept PC-lint suggestion",
-			command: PcLintProvider.commandId,
-			arguments: [document, diagnostic.range, diagnostic.message]
-		}];
+		return [];
 	}
 	
 	private runCodeAction(document: vscode.TextDocument, range: vscode.Range, message:string): any {

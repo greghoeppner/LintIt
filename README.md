@@ -37,6 +37,10 @@ None at this time.
 
 ## Release Notes
 
+### 0.0.5
+
+- Fixed crash issue.
+
 ### 0.0.4
 
 - Fixed issue where the path is blank.
