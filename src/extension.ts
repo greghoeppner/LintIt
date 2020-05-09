@@ -28,15 +28,20 @@ export function activate(context: vscode.ExtensionContext) {
 		process.stdout.on('data', (data: Buffer) => {
 			decoded += data;
 		});
-		process.stdout.on('end', () => {
+		process.on('close', (code: number) => {
 			var lines = decoded.split("\r\n");
+			var count = 0;
 			lines.forEach(line => {
 				if ((line.trim() === "") || (line.startsWith('---'))) {
 					return;
 				}
 
 				channel.appendLine(line);
+				count++;
 			});
+			if (count === 0) {
+				channel.appendLine('No lint exceptions found');
+			}
 		});
 	});
 

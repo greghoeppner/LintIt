@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.6
+
+- Added output for when no exceptions were found.
+
 ## 0.0.5
 
 - Fixed crash issue.
