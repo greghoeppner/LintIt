@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.0
+
+- Added aggressive mode. This causes all the open files to be linted on any change in the editor. Might cause the system to slow down but will better update the problems lists.
+
 ## 0.0.6
 
 - Added output for when no exceptions were found.
