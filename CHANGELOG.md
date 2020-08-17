@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.2
+
+- Security update.
+
 ## 0.1.1
 
 - Updated packages to fix vulnerability.
