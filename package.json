@@ -3,7 +3,7 @@
 	"displayName": "Lint It",
 	"description": "Lint parser for PC-Lint",
 	"publisher": "greghoeppner",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/greghoeppner/LintIt"
@@ -35,6 +35,36 @@
 						"scope": "application",
 						"description": "Enables/disables agressive lint mode (all open files will be linted instead of just the changed file",
 						"default": false
+					},
+					"lintit.legacyMode": {
+						"type": "boolean",
+						"scope": "application",
+						"description": "Enables/disables legacy mode using the batch file",
+						"default": false
+					},
+					"lintit.pcLintLocation": {
+						"type": "string",
+						"scope": "window",
+						"description": "The executable location for PC-Lint",
+						"default": "c:\\PC-Lint\\lint-nt.exe"
+					},
+					"lintit.includeFolders": {
+						"type": "array",
+						"scope": "window",
+						"description": "The include folders for PC-Lint",
+						"default": []
+					},
+					"lintit.lintFiles": {
+						"type": "array",
+						"scope": "window",
+						"description": "The lint files to use for linting",
+						"default": []
+					},
+					"lintit.sourceFolders": {
+						"type": "array",
+						"scope": "window",
+						"description": "The folders to lint",
+						"default": []
 					}
 				}
 			}

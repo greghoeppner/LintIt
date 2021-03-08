@@ -10,6 +10,10 @@ A PC-Lint error parser
 
 Requires PC-Lint to be installed.
 
+Use the settings described in the extension settings to lint your files.
+
+### Legacy Mode
+
 For setting up this plugin to use. At the moment, I didn't have time to add configuration options. This
 means that right now, to use the plugin the plugin tries to run a file called 'lint.bat' in the workspace root folder.
 The plugin then reads any output from the batch file. The format that it is looking for PC-Lint to be setup with is as
@@ -29,7 +33,20 @@ if not "%1"=="" (
 
 ## Extension Settings
 
-None at this time.
+- lintit.pcLintLocation - string - The location of PC-Lint. Example: "lintit.pcLintLocation": "c:\\\\PC-Lint\\\\lint-nt.exe"
+- lintit.lintFiles - array - The list of .lnt files to include when linting. Example: "lintit.lintFiles": ["${workspaceFolder}/lint/app.lnt"]
+- lintit.sourceFolders - array - The folders to include for detecting source files that require linting. The folders search is recursive. Example: "lintit.sourceFolders": ["${workspaceFolder}/source"]
+- lintit.includeFolders - array - The include folders to use when linting files (automatically prefixed with -i when sending to PC-Lint). Example:
+```
+	"lintit.includeFolders": [
+        "${workspaceFolder}/lint", 
+        "${workspaceFolder}/common/FreeRTOS/include", 
+        "${workspaceFolder}/common/FreeRTOS/portable/IAR/ARM_CM3", 
+        "${workspaceFolder}/driver_source", 
+        "${workspaceFolder}/driver_interface"
+    ]
+```
+- lintit.legacyMode - boolean - Enables legacy mode. None of the above options work when using legacy mode. Legacy mode requires a lint.bat file to be present in the workspace root folder.
 
 ## Known Issues
 

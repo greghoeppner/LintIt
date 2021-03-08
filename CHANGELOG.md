@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.0
+
+- Added the direct calling of PC-Lint rather than using a batch file to run PC-Lint.
+
 ## 0.1.2
 
 - Security update.
