@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.2.1
+
+- Updated agressive mode to work with the new direct calling method.
+- Added a summary at the end of the full lint.
+
 ## 0.2.0
 
 - Added the direct calling of PC-Lint rather than using a batch file to run PC-Lint.

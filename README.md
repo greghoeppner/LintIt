@@ -46,6 +46,7 @@ if not "%1"=="" (
         "${workspaceFolder}/driver_interface"
     ]
 ```
+- lintit.agressiveMode - boolean - Enables aggressive mode. Scans all open files for lint issues on saving a file.
 - lintit.legacyMode - boolean - Enables legacy mode. None of the above options work when using legacy mode. Legacy mode requires a lint.bat file to be present in the workspace root folder.
 
 ## Known Issues

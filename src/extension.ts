@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import pcLintProvider from './pcLintProvider';
 
+let numberOfIssues = 0;
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Lint It is now active!');
 
@@ -23,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (vscode.workspace.getConfiguration("lintit").legacyMode) {
 			lintFilesLegacy(workspaceFolder, channel);
 		} else {
+			numberOfIssues = 0;
 			lintFiles(workspaceFolder, channel);
 		}
 	});
@@ -32,35 +35,39 @@ export function activate(context: vscode.ExtensionContext) {
 
 function lintFiles(workspaceFolder: string, channel: vscode.OutputChannel) {
 	var settings = vscode.workspace.getConfiguration("lintit");
+	let promises = new Array<Promise<string[]>>();
 
-	settings.sourceFolders.forEach((sourceFolder: string) => {
-		lintFolder(sourceFolder, workspaceFolder, channel);	
-	});
-}
+	for (const sourceFolder of settings.sourceFolders) {
+		lintFolder(sourceFolder, workspaceFolder, promises);
+	}
 
-function lintFolder(folder: string, workspaceFolder: string, channel: vscode.OutputChannel) {
-	let absolutePath = normalizePath(folder);
-
-	fs.readdir(absolutePath, { withFileTypes: true }, (err, files: fs.Dirent[]) => {
-		files.forEach((file: fs.Dirent) => {
-			if (file.isDirectory()) {
-				lintFolder(path.join(absolutePath, file.name), workspaceFolder, channel);
-			} else {
-				if (path.extname(file.name).toUpperCase() === '.c'.toUpperCase()) {
-					executeLint(path.join(absolutePath, file.name))
-						.then(lines => {
-							for (let index = 0; index < lines.length; index++) {
-								const line = lines[index];
-								channel.appendLine(line);
-							}
-						})
-						.catch(reason => {
-							vscode.window.showInformationMessage(reason);
-						});
+	Promise.all(promises)
+		.then(lintResults => {
+			for (let index = 0; index < lintResults.length; index++) {
+				const lines = lintResults[index];
+				for (const line of lines) {
+					channel.appendLine(line);
 				}
 			}
+			channel.appendLine('Total PC-Lint Warnings: ' + numberOfIssues);
+		})
+		.catch(reason => {
+			vscode.window.showInformationMessage(reason);
 		});
-	});
+}
+
+function lintFolder(folder: string, workspaceFolder: string, promises: Promise<string[]>[]) {
+	let absolutePath = normalizePath(folder);
+
+	let files = fs.readdirSync(absolutePath, { withFileTypes: true });
+
+	for (const file of files) {
+		if (file.isDirectory()) {
+			lintFolder(path.join(absolutePath, file.name), workspaceFolder, promises);
+		} else if (path.extname(file.name).toUpperCase() === '.c'.toUpperCase()) {
+			promises.push(executeLint(path.join(absolutePath, file.name)));
+		}
+	}
 }
 
 function normalizePath(pathText: string): string {
@@ -99,6 +106,7 @@ async function executeLint(documentName: string): Promise<string[]> {
 						continue;
 					}
 		
+					numberOfIssues++;
 					output.push('  ' + line);
 				}
 

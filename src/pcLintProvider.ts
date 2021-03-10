@@ -60,47 +60,50 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private async lintAllOpenFiles(document: vscode.TextDocument | undefined) {
-		this.mutex.acquire().then(async (release) => {
-			var promises = vscode.workspace.textDocuments
-				.filter(function (document) { return document?.languageId === 'c'; })
-				.map(document => this.lintDocumentLegacy(document));
+		if (document === undefined || (document?.languageId === 'c') && this.isDocumentInSource(document)) {
+			this.mutex.acquire().then(async (release) => {
+				var promises = vscode.workspace.textDocuments
+					.filter((d) => { return (d?.languageId === 'c') && this.isDocumentInSource(d); })
+					.map(d => this.lintDocument(d));
 
-			Promise.all(promises).then((results) => {
-				let diagnostics = new Map<string, vscode.Diagnostic[]>();
+				Promise.all(promises).then((results) => {
+					let diagnostics = new Map<string, vscode.Diagnostic[]>();
 
-				results.forEach(result => {
-					for (const [key, value] of result.entries()) {
-						if (diagnostics.has(key)) {
-							diagnostics.get(key)?.concat(value);
-						} else {
-							diagnostics.set(key, value);
+					results.forEach(result => {
+						for (const [key, value] of result.entries()) {
+							if (diagnostics.has(key)) {
+								diagnostics.get(key)?.concat(value);
+							} else {
+								diagnostics.set(key, value);
+							}
 						}
-					}
-				});
+					});
 
-				this.diagnosticCollection.clear();
-				for (const [key, value] of diagnostics.entries()) {
-					this.diagnosticCollection.set(vscode.Uri.file(key), value);
-				}
-			}).catch((reason) => {
-				console.log(reason);
-				vscode.window.showInformationMessage(`Cannot Lint the c file.`);
-			}).finally(() => {
-				release();
-			});
-		}).catch((reason) => console.log('mutex problem: ' + reason));
+					this.diagnosticCollection.clear();
+					for (const [key, value] of diagnostics.entries()) {
+						this.diagnosticCollection.set(vscode.Uri.file(key), value);
+					}
+				}).catch((reason) => {
+					console.log(reason);
+					vscode.window.showInformationMessage(`Cannot Lint the c file.`);
+				}).finally(() => {
+					release();
+				});
+			}).catch((reason) => console.log('mutex problem: ' + reason));
+		}
 	}
 
-	private lintDocumentLegacy(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
+	private lintDocument(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
 		return new Promise((resolve, reject) => {
+			console.log('linting file ' + textDocument.fileName);
 			let decoded = '';
 			let diagnostics = new Map<string, vscode.Diagnostic[]>();
 			diagnostics.set(textDocument.uri.fsPath, []);
-
-			let options = this.workspaceFolder ? { cwd: this.workspaceFolder } : undefined;
-			let args = [textDocument.fileName];
-
-			let childProcess = cp.spawn('lint.bat', args, options);
+	
+			let options = { cwd: path.dirname(textDocument.fileName) };
+			let args = this.getLintArgs(textDocument);
+	
+			let childProcess = cp.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
 			childProcess.on('error', (error: Error) => {
 				reject(error);
 			});
@@ -253,6 +256,66 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		} else {
 			return pathText.replace('/', '\\');
 		}
+	}
+
+	private lintDocumentLegacy(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
+		return new Promise((resolve, reject) => {
+			let decoded = '';
+			let diagnostics = new Map<string, vscode.Diagnostic[]>();
+			diagnostics.set(textDocument.uri.fsPath, []);
+
+			let options = this.workspaceFolder ? { cwd: this.workspaceFolder } : undefined;
+			let args = [textDocument.fileName];
+
+			let childProcess = cp.spawn('lint.bat', args, options);
+			childProcess.on('error', (error: Error) => {
+				reject(error);
+			});
+			if (childProcess.pid) {
+				childProcess.stdout.on('data', (data: Buffer) => {
+					decoded += data;
+				});
+				childProcess.stdout.on('end', () => {
+					var lines = decoded.split("\r\n");
+					lines.forEach(line => {
+						if (line.trim() === "") {
+							return;
+						}
+
+						var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/gm;
+						var result = re.exec(line);
+						if (result !== null && result.length > 5) {
+							let uri = vscode.Uri.file(result[1]).fsPath;
+							if (uri === "\\") {
+								uri = textDocument.uri.fsPath;
+							}
+							let lineNumber = Number.parseInt(result[2]);
+							let errorType = result[3];
+							let errorCode = result[4];
+							let message = result[3] + " " + result[4] + ": " + result[5];
+
+							var severity = vscode.DiagnosticSeverity.Information;
+							switch (errorType.toLowerCase()) {
+								case "error":
+									severity = vscode.DiagnosticSeverity.Error;
+									break;
+								case "warning":
+									severity = vscode.DiagnosticSeverity.Warning;
+									break;
+							}
+							let range = lineNumber <= 0 ? new vscode.Range(0, 0, 1, 0) : new vscode.Range(lineNumber - 1, 0, lineNumber, 0);
+							let diagnostic = new vscode.Diagnostic(range, message, severity);
+							if (diagnostics.has(uri)) {
+								diagnostics.get(uri)?.push(diagnostic);
+							} else {
+								diagnostics.set(uri, [diagnostic]);
+							}
+						}
+					});
+					resolve(diagnostics);
+				});
+			}
+		});
 	}
 
 	private doLintLegacy(textDocument: vscode.TextDocument) {
