@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.2
+
+- Agressive mode will now initiate linting of all the open files when saving/opening/closing header files.
+
 ## 0.2.1
 
 - Updated agressive mode to work with the new direct calling method.

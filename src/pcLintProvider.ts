@@ -60,7 +60,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private async lintAllOpenFiles(document: vscode.TextDocument | undefined) {
-		if (document === undefined || (document?.languageId === 'c') && this.isDocumentInSource(document)) {
+		if (document === undefined || this.isDocumentC(document) && this.isDocumentInSource(document)) {
 			this.mutex.acquire().then(async (release) => {
 				var promises = vscode.workspace.textDocuments
 					.filter((d) => { return (d?.languageId === 'c') && this.isDocumentInSource(d); })
@@ -91,6 +91,11 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 				});
 			}).catch((reason) => console.log('mutex problem: ' + reason));
 		}
+	}
+
+	private isDocumentC(document: vscode.TextDocument) {
+		// Allow the detection of c++ files so that header files are also detected.
+		return (document?.languageId === 'c') || (document?.languageId === 'cpp');
 	}
 
 	private lintDocument(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
