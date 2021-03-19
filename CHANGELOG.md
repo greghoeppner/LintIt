@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.3
+
+- Changed the settings for agressive mode and legacy mode to be configured at the workspace level as well as the user level.
+
 ## 0.2.2
 
 - Agressive mode will now initiate linting of all the open files when saving/opening/closing header files.

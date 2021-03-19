@@ -3,7 +3,7 @@
 	"displayName": "Lint It",
 	"description": "Lint parser for PC-Lint",
 	"publisher": "greghoeppner",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/greghoeppner/LintIt"
@@ -32,13 +32,13 @@
 				"properties": {
 					"lintit.aggressiveMode": {
 						"type": "boolean",
-						"scope": "application",
+						"scope": "window",
 						"description": "Enables/disables agressive lint mode (all open files will be linted instead of just the changed file",
 						"default": false
 					},
 					"lintit.legacyMode": {
 						"type": "boolean",
-						"scope": "application",
+						"scope": "window",
 						"description": "Enables/disables legacy mode using the batch file",
 						"default": false
 					},
