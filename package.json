@@ -3,7 +3,7 @@
 	"displayName": "Lint It",
 	"description": "Lint parser for PC-Lint",
 	"publisher": "greghoeppner",
-	"version": "0.2.3",
+	"version": "0.3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/greghoeppner/LintIt"
@@ -48,22 +48,71 @@
 						"description": "The executable location for PC-Lint",
 						"default": "c:\\PC-Lint\\lint-nt.exe"
 					},
+					"lintit.configurations": {
+						"type": "array",
+						"scope": "window",
+						"items": {
+							"type":"object",
+							"title": "Configuration",
+							"properties": {
+								"includeFolders": {
+									"type": "array",
+									"description": "The include folders for PC-Lint",
+									"default": []
+								},
+								"libraryIncludeFolders": {
+									"type": "array",
+									"description": "The library include folders for PC-Lint",
+									"default": []
+								},
+								"lintFiles": {
+									"type": "array",
+									"description": "The lint files to use for linting",
+									"default": []
+								},
+								"sourceFolders": {
+									"type": "array",
+									"scope": "window",
+									"description": "The folders to lint",
+									"default": []
+								}
+							}
+						},
+						"default": [
+							{
+								"includeFolders": [],
+								"libraryIncludeFolders": [],
+								"lintFiles": [],
+								"sourceFolders": []
+							}
+						]
+					},
 					"lintit.includeFolders": {
 						"type": "array",
 						"scope": "window",
-						"description": "The include folders for PC-Lint",
+						"description": "The include folders for PC-Lint '-i directory'",
+						"deprecationMessage": "Use the configurations property instead to configure these settings",
+						"default": []
+					},
+					"lintit.libraryIncludeFolders": {
+						"type": "array",
+						"scope": "window",
+						"description": "The library include folders for PC-Lint '+libdir(directory)'",
+						"deprecationMessage": "Use the configurations property instead to configure these settings",
 						"default": []
 					},
 					"lintit.lintFiles": {
 						"type": "array",
 						"scope": "window",
 						"description": "The lint files to use for linting",
+						"deprecationMessage": "Use the configurations property instead to configure these settings",
 						"default": []
 					},
 					"lintit.sourceFolders": {
 						"type": "array",
 						"scope": "window",
 						"description": "The folders to lint",
+						"deprecationMessage": "Use the configurations property instead to configure these settings",
 						"default": []
 					}
 				}

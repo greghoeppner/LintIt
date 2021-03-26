@@ -100,7 +100,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 
 	private lintDocument(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
 		return new Promise((resolve, reject) => {
-			console.log('linting file ' + textDocument.fileName);
+			console.log('lintDocument: ' + textDocument.fileName);
 			let decoded = '';
 			let diagnostics = new Map<string, vscode.Diagnostic[]>();
 			diagnostics.set(textDocument.uri.fsPath, []);
@@ -167,6 +167,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		if (!this.isDocumentInSource(textDocument)) {
 			return;
 		}
+		console.log('doLint: ' + textDocument.fileName);
 
 		let decoded = '';
 		let diagnostics = new Map<string, vscode.Diagnostic[]>();
@@ -231,27 +232,63 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	private isDocumentInSource(textDocument: vscode.TextDocument): boolean {
 		let result = false;
 		var settings = vscode.workspace.getConfiguration("lintit");
-		settings.sourceFolders.forEach((folder: string) => {
-			let normalizedPath = this.normalizePath(folder);
-			if (textDocument.fileName.toUpperCase().startsWith(normalizedPath.toUpperCase())) {
-				result = true;
+
+		if (settings.configurations.length === 0) {
+			result = this.isFileInFolders(textDocument.fileName, settings.sourceFolders);
+		} else {
+			for (const configuration of settings.configurations) {
+				if (this.isFileInFolders(textDocument.fileName, configuration.sourceFolders)) {
+					result = true;
+					break;
+				}
 			}
-		});
+		}
+
 		return result;
+	}
+
+	private isFileInFolders(fileName: string, sourceFolders: any): boolean {
+		for (const folder of sourceFolders) {
+			let normalizedPath = this.normalizePath(folder);
+			if (fileName.toUpperCase().startsWith(normalizedPath.toUpperCase())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 	
 	private getLintArgs(textDocument: vscode.TextDocument) {
 		let args = ['-elib(0)', '+ffn', '-width(0)', '-hf1', '-u', '-"format=%f(%l): %t %n: %m"'];
-		var settings = vscode.workspace.getConfiguration("lintit");
+		var settings = this.getConfiguration(textDocument);
 		settings.includeFolders.forEach((folder: string) => {
 			args.push('-i"' + this.normalizePath(folder) + '"');
 		});
+		if (settings.hasOwnProperty('libraryIncludeFolders')) {
+			settings.libraryIncludeFolders.forEach((folder: string) => {
+				args.push('+libdir("' + this.normalizePath(folder) + '")');
+			});
+		}
 		settings.lintFiles.forEach((lntFile: string) => {
 			args.push('"' + this.normalizePath(lntFile) + '"');
 		});
 		args.push(textDocument.fileName);
 
 		return args;
+	}
+
+	private getConfiguration(textDocument: vscode.TextDocument): any {
+		var settings = vscode.workspace.getConfiguration("lintit");
+
+		if (settings.configurations.length === 0) {
+			return settings;
+		}
+
+		for (const configuration of settings.configurations) {
+			if (this.isFileInFolders(textDocument.fileName, configuration.sourceFolders)) {
+				return configuration;
+			}
+		}
 	}
 
 	private normalizePath(pathText: string): string {

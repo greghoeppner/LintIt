@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.3.0
+
+- Changed the settings to allow for multiple configurations to be done per source folders.
+- Added setting for providing library include folders. PC-Lint +libdir(directory) command.
+
 ## 0.2.3
 
 - Changed the settings for agressive mode and legacy mode to be configured at the workspace level as well as the user level.

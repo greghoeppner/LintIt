@@ -34,6 +34,24 @@ if not "%1"=="" (
 ## Extension Settings
 
 - lintit.pcLintLocation - string - The location of PC-Lint. Example: "lintit.pcLintLocation": "c:\\\\PC-Lint\\\\lint-nt.exe"
+- lintit.configurations - array - A list of configurations
+    - lintFiles - array - The list of .lnt files to include when linting. Example: "lintFiles": ["${workspaceFolder}/lint/app.lnt"]
+    - sourceFolders - array - The folders to include for detecting source files that require linting. The folders search is recursive. Example: "sourceFolders": ["${workspaceFolder}/source"]
+    - libraryIncludeFolders - array - The library include folders "+libdir(directory)". Example: "libraryIncludeFolders": "${workspaceFolder}/driver_interface"
+    - includeFolders - array - The include folders to use when linting files (automatically prefixed with -i when sending to PC-Lint). Example:
+```
+	"includeFolders": [
+        "${workspaceFolder}/lint", 
+        "${workspaceFolder}/common/FreeRTOS/include", 
+        "${workspaceFolder}/common/FreeRTOS/portable/IAR/ARM_CM3", 
+        "${workspaceFolder}/driver_source", 
+        "${workspaceFolder}/driver_interface"
+    ]
+```
+- lintit.agressiveMode - boolean - Enables aggressive mode. Scans all open files for lint issues on saving a file.
+- lintit.legacyMode - boolean - Enables legacy mode. None of the above options work when using legacy mode. Legacy mode requires a lint.bat file to be present in the workspace root folder.
+
+## Deprecated Settings
 - lintit.lintFiles - array - The list of .lnt files to include when linting. Example: "lintit.lintFiles": ["${workspaceFolder}/lint/app.lnt"]
 - lintit.sourceFolders - array - The folders to include for detecting source files that require linting. The folders search is recursive. Example: "lintit.sourceFolders": ["${workspaceFolder}/source"]
 - lintit.includeFolders - array - The include folders to use when linting files (automatically prefixed with -i when sending to PC-Lint). Example:
@@ -46,8 +64,7 @@ if not "%1"=="" (
         "${workspaceFolder}/driver_interface"
     ]
 ```
-- lintit.agressiveMode - boolean - Enables aggressive mode. Scans all open files for lint issues on saving a file.
-- lintit.legacyMode - boolean - Enables legacy mode. None of the above options work when using legacy mode. Legacy mode requires a lint.bat file to be present in the workspace root folder.
+
 
 ## Known Issues
 

@@ -37,8 +37,12 @@ function lintFiles(workspaceFolder: string, channel: vscode.OutputChannel) {
 	var settings = vscode.workspace.getConfiguration("lintit");
 	let promises = new Array<Promise<string[]>>();
 
-	for (const sourceFolder of settings.sourceFolders) {
-		lintFolder(sourceFolder, workspaceFolder, promises);
+	if (settings.configurations.length === 0) {
+		lintConfiguration(settings, workspaceFolder, promises);
+	} else {
+		for (const configuration of settings.configurations) {
+			lintConfiguration(configuration, workspaceFolder, promises);
+		}	
 	}
 
 	Promise.all(promises)
@@ -56,16 +60,22 @@ function lintFiles(workspaceFolder: string, channel: vscode.OutputChannel) {
 		});
 }
 
-function lintFolder(folder: string, workspaceFolder: string, promises: Promise<string[]>[]) {
+function lintConfiguration(configuration: any, workspaceFolder: string, promises: Promise<string[]>[]) {
+	for (const sourceFolder of configuration.sourceFolders) {
+		lintFolder(sourceFolder, configuration, workspaceFolder, promises);
+	}
+}
+
+function lintFolder(folder: string, configuration: any, workspaceFolder: string, promises: Promise<string[]>[]) {
 	let absolutePath = normalizePath(folder);
 
 	let files = fs.readdirSync(absolutePath, { withFileTypes: true });
 
 	for (const file of files) {
 		if (file.isDirectory()) {
-			lintFolder(path.join(absolutePath, file.name), workspaceFolder, promises);
+			lintFolder(path.join(absolutePath, file.name), configuration, workspaceFolder, promises);
 		} else if (path.extname(file.name).toUpperCase() === '.c'.toUpperCase()) {
-			promises.push(executeLint(path.join(absolutePath, file.name)));
+			promises.push(executeLint(path.join(absolutePath, file.name), configuration));
 		}
 	}
 }
@@ -80,10 +90,10 @@ function normalizePath(pathText: string): string {
 	}
 }
 
-async function executeLint(documentName: string): Promise<string[]> {
+async function executeLint(documentName: string, configuration: any): Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		let options = { cwd: path.dirname(documentName) };
-		let args = getLintArgs(documentName);
+		let args = getLintArgs(documentName, configuration);
 		let output: string[] = [];
 		output.push('Linting file ' + documentName + ':');
 		let decoded = '';
@@ -117,13 +127,17 @@ async function executeLint(documentName: string): Promise<string[]> {
 	});
 }
 
-function getLintArgs(documentName: string) {
+function getLintArgs(documentName: string, configuration: any) {
 	let args = ['-elib(0)', '+ffn', '-width(0)', '-hf1', '-u', '-"format=%f(%l): %t %n: %m"'];
-	var settings = vscode.workspace.getConfiguration("lintit");
-	settings.includeFolders.forEach((folder: string) => {
+	configuration.includeFolders.forEach((folder: string) => {
 		args.push('-i"' + normalizePath(folder) + '"');
 	});
-	settings.lintFiles.forEach((lntFile: string) => {
+	if (configuration.hasOwnProperty('libraryIncludeFolders')) {
+		configuration.libraryIncludeFolders.forEach((folder: string) => {
+			args.push('+libdir("' + normalizePath(folder) + '")');
+		});
+	}
+	configuration.lintFiles.forEach((lntFile: string) => {
 		args.push('"' + normalizePath(lntFile) + '"');
 	});
 	args.push(documentName);
