@@ -1,8 +1,12 @@
 # Change Log
 
+## 0.3.2
+
+- Fixed issue where the files were no longer being detected in the document scan.
+
 ## 0.3.1
 
-- Added setting for the file extensions to include in the scan
+- Added setting for the file extensions to include in the scan.
 
 ## 0.3.0
 

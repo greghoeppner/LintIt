@@ -60,37 +60,38 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private async lintAllOpenFiles(document: vscode.TextDocument | undefined) {
-		if (document === undefined || this.isDocumentC(document) && this.isDocumentInSource(document)) {
-			this.mutex.acquire().then(async (release) => {
-				var promises = vscode.workspace.textDocuments
-					.filter((d) => { return this.isFileLintable(d?.fileName) && this.isDocumentInSource(d); })
-					.map(d => this.lintDocument(d));
+		this.mutex.acquire().then(async (release) => {
+			var promises = vscode.workspace.textDocuments
+				.filter((d) => { 
+					let fileName = this.getActualFileName(d);
+					return this.isFileLintable(fileName) && this.isDocumentInSource(fileName);
+				 })
+				.map(d => this.lintDocument(d));
 
-				Promise.all(promises).then((results) => {
-					let diagnostics = new Map<string, vscode.Diagnostic[]>();
+			Promise.all(promises).then((results) => {
+				let diagnostics = new Map<string, vscode.Diagnostic[]>();
 
-					results.forEach(result => {
-						for (const [key, value] of result.entries()) {
-							if (diagnostics.has(key)) {
-								diagnostics.get(key)?.concat(value);
-							} else {
-								diagnostics.set(key, value);
-							}
+				results.forEach(result => {
+					for (const [key, value] of result.entries()) {
+						if (diagnostics.has(key)) {
+							diagnostics.get(key)?.concat(value);
+						} else {
+							diagnostics.set(key, value);
 						}
-					});
-
-					this.diagnosticCollection.clear();
-					for (const [key, value] of diagnostics.entries()) {
-						this.diagnosticCollection.set(vscode.Uri.file(key), value);
 					}
-				}).catch((reason) => {
-					console.log(reason);
-					vscode.window.showInformationMessage(`Cannot Lint the file.`);
-				}).finally(() => {
-					release();
 				});
-			}).catch((reason) => console.log('mutex problem: ' + reason));
-		}
+
+				this.diagnosticCollection.clear();
+				for (const [key, value] of diagnostics.entries()) {
+					this.diagnosticCollection.set(vscode.Uri.file(key), value);
+				}
+			}).catch((reason) => {
+				console.log(reason);
+				vscode.window.showInformationMessage(`Cannot Lint the file.`);
+			}).finally(() => {
+				release();
+			});
+		}).catch((reason) => console.log('mutex problem: ' + reason));
 	}
 
 	private isDocumentC(document: vscode.TextDocument) {
@@ -99,14 +100,19 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private isFileLintable(filename: string): boolean {
-		let configuration = vscode.workspace.getConfiguration("lintit");
-		if (configuration.hasOwnProperty('extensions')) {
-			for (const extension of configuration.extensions) {
-				if (path.extname(filename).toUpperCase() === extension.toUpperCase()) {
-					return true;
+		var settings = vscode.workspace.getConfiguration("lintit");
+
+		if (settings.configurations.length > 0) {
+			for (const configuration of settings.configurations) {
+				if (configuration.hasOwnProperty('extensions')) {
+					for (const extension of configuration.extensions) {
+						if (path.extname(filename).toUpperCase() === extension.toUpperCase()) {
+							return true;
+						}
+					}
 				}
 			}
-	
+
 			return false;
 		}
 	
@@ -115,12 +121,13 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	
 	private lintDocument(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
 		return new Promise((resolve, reject) => {
-			console.log('lintDocument: ' + textDocument.fileName);
+			let fileName = this.getActualFileName(textDocument);
+				console.log('lintDocument: ' + fileName);
 			let decoded = '';
 			let diagnostics = new Map<string, vscode.Diagnostic[]>();
 			diagnostics.set(textDocument.uri.fsPath, []);
 	
-			let options = { cwd: path.dirname(textDocument.fileName) };
+			let options = { cwd: path.dirname(fileName) };
 			let args = this.getLintArgs(textDocument);
 	
 			let childProcess = cp.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
@@ -175,20 +182,21 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private doLint(textDocument: vscode.TextDocument) {
-		if (!this.isFileLintable(textDocument.fileName)) {
+		let fileName = this.getActualFileName(textDocument);
+		if (!this.isFileLintable(fileName)) {
 			return;
 		}
 
-		if (!this.isDocumentInSource(textDocument)) {
+		if (!this.isDocumentInSource(fileName)) {
 			return;
 		}
-		console.log('doLint: ' + textDocument.fileName);
+		console.log('doLint: ' + fileName);
 
 		let decoded = '';
 		let diagnostics = new Map<string, vscode.Diagnostic[]>();
 		diagnostics.set(textDocument.uri.fsPath, []);
 
-		let options = { cwd: path.dirname(textDocument.fileName) };
+		let options = { cwd: path.dirname(fileName) };
 		let args = this.getLintArgs(textDocument);
 
 		let childProcess = cp.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
@@ -244,15 +252,23 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		}
 	}
 	
-	private isDocumentInSource(textDocument: vscode.TextDocument): boolean {
+	private getActualFileName(textDocument: vscode.TextDocument): string {
+		let fileName = textDocument.fileName;
+		if (fileName.endsWith('.git')) {
+			fileName = fileName.substr(0, fileName.length - 4);
+		}
+		return fileName;
+	}
+
+	private isDocumentInSource(fileName: string): boolean {
 		let result = false;
 		var settings = vscode.workspace.getConfiguration("lintit");
 
 		if (settings.configurations.length === 0) {
-			result = this.isFileInFolders(textDocument.fileName, settings.sourceFolders);
+			result = this.isFileInFolders(fileName, settings.sourceFolders);
 		} else {
 			for (const configuration of settings.configurations) {
-				if (this.isFileInFolders(textDocument.fileName, configuration.sourceFolders)) {
+				if (this.isFileInFolders(fileName, configuration.sourceFolders)) {
 					result = true;
 					break;
 				}
@@ -287,7 +303,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		settings.lintFiles.forEach((lntFile: string) => {
 			args.push('"' + this.normalizePath(lntFile) + '"');
 		});
-		args.push(textDocument.fileName);
+		args.push(this.getActualFileName(textDocument));
 
 		return args;
 	}
@@ -300,7 +316,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		}
 
 		for (const configuration of settings.configurations) {
-			if (this.isFileInFolders(textDocument.fileName, configuration.sourceFolders)) {
+			if (this.isFileInFolders(this.getActualFileName(textDocument), configuration.sourceFolders)) {
 				return configuration;
 			}
 		}

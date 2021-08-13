@@ -5,18 +5,13 @@ import * as path from 'path';
 import pcLintProvider from './pcLintProvider';
 
 let numberOfIssues = 0;
-let documentSelector = [
-	{ scheme: 'file', language: 'c' },
-	{ scheme: 'file', language: 'cpp' },
-	{ scheme: 'file', language: 'cuda-cpp' }
-];
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Lint It is now active!');
 
 	let linter = new pcLintProvider();	
 	linter.activate(context.subscriptions);
-	vscode.languages.registerCodeActionsProvider(documentSelector, linter);
+	vscode.languages.registerCodeActionsProvider(["c","cpp"], linter);
 
 	var channel = vscode.window.createOutputChannel('Lint It');
 
