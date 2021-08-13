@@ -5,13 +5,18 @@ import * as path from 'path';
 import pcLintProvider from './pcLintProvider';
 
 let numberOfIssues = 0;
+let documentSelector = [
+	{ scheme: 'file', language: 'c' },
+	{ scheme: 'file', language: 'cpp' },
+	{ scheme: 'file', language: 'cuda-cpp' }
+];
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Lint It is now active!');
 
 	let linter = new pcLintProvider();	
 	linter.activate(context.subscriptions);
-	vscode.languages.registerCodeActionsProvider('c', linter);
+	vscode.languages.registerCodeActionsProvider(documentSelector, linter);
 
 	var channel = vscode.window.createOutputChannel('Lint It');
 
@@ -74,7 +79,7 @@ function lintFolder(folder: string, configuration: any, workspaceFolder: string,
 	for (const file of files) {
 		if (file.isDirectory()) {
 			lintFolder(path.join(absolutePath, file.name), configuration, workspaceFolder, promises);
-		} else if (path.extname(file.name).toUpperCase() === '.c'.toUpperCase()) {
+		} else if (isFileLintable(configuration, file.name)) {
 			promises.push(executeLint(path.join(absolutePath, file.name), configuration));
 		}
 	}
@@ -90,6 +95,20 @@ function normalizePath(pathText: string): string {
 	}
 }
 
+function isFileLintable(configuration: any, filename: string): boolean {
+	if (configuration.hasOwnProperty('extensions')) {
+		for (const extension of configuration.extensions) {
+			if (path.extname(filename).toUpperCase() === extension.toUpperCase()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	return (path.extname(filename).toUpperCase() === '.c'.toUpperCase());
+}
+
 async function executeLint(documentName: string, configuration: any): Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		let options = { cwd: path.dirname(documentName) };
@@ -101,7 +120,7 @@ async function executeLint(documentName: string, configuration: any): Promise<st
 	
 		childProcess.on('error', (error: Error) => {
 			console.log(error);
-			reject(`Cannot Lint the c file ` + documentName);
+			reject(`Cannot Lint the file ` + documentName);
 		});
 		if (childProcess.pid) {
 			childProcess.stdout.on('data', (data: Buffer) => {

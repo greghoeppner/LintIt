@@ -36,6 +36,7 @@ if not "%1"=="" (
 - lintit.pcLintLocation - string - The location of PC-Lint. Example: "lintit.pcLintLocation": "c:\\\\PC-Lint\\\\lint-nt.exe"
 - lintit.configurations - array - A list of configurations
     - lintFiles - array - The list of .lnt files to include when linting. Example: "lintFiles": ["${workspaceFolder}/lint/app.lnt"]
+    - extensions - array - A list of extensions to scan. Example: "extensions": [".c",".cpp"]
     - sourceFolders - array - The folders to include for detecting source files that require linting. The folders search is recursive. Example: "sourceFolders": ["${workspaceFolder}/source"]
     - libraryIncludeFolders - array - The library include folders "+libdir(directory)". Example: "libraryIncludeFolders": "${workspaceFolder}/driver_interface"
     - includeFolders - array - The include folders to use when linting files (automatically prefixed with -i when sending to PC-Lint). Example:

@@ -3,7 +3,7 @@
 	"displayName": "Lint It",
 	"description": "Lint parser for PC-Lint",
 	"publisher": "greghoeppner",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/greghoeppner/LintIt"
@@ -16,7 +16,8 @@
 	],
 	"activationEvents": [
 		"onCommand:lintIt.execute",
-		"onLanguage:c"
+		"onLanguage:c",
+		"onLanguage:cpp"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -75,6 +76,11 @@
 									"scope": "window",
 									"description": "The folders to lint",
 									"default": []
+								},
+								"extensions": {
+									"type": "array",
+									"description": "The file extensions to scan. Include the period (.c)",
+									"default": []
 								}
 							}
 						},
@@ -83,7 +89,8 @@
 								"includeFolders": [],
 								"libraryIncludeFolders": [],
 								"lintFiles": [],
-								"sourceFolders": []
+								"sourceFolders": [],
+								"extensions": [".c"]
 							}
 						]
 					},

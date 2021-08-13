@@ -63,7 +63,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		if (document === undefined || this.isDocumentC(document) && this.isDocumentInSource(document)) {
 			this.mutex.acquire().then(async (release) => {
 				var promises = vscode.workspace.textDocuments
-					.filter((d) => { return (d?.languageId === 'c') && this.isDocumentInSource(d); })
+					.filter((d) => { return this.isFileLintable(d?.fileName) && this.isDocumentInSource(d); })
 					.map(d => this.lintDocument(d));
 
 				Promise.all(promises).then((results) => {
@@ -85,7 +85,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 					}
 				}).catch((reason) => {
 					console.log(reason);
-					vscode.window.showInformationMessage(`Cannot Lint the c file.`);
+					vscode.window.showInformationMessage(`Cannot Lint the file.`);
 				}).finally(() => {
 					release();
 				});
@@ -98,6 +98,21 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		return (document?.languageId === 'c') || (document?.languageId === 'cpp');
 	}
 
+	private isFileLintable(filename: string): boolean {
+		let configuration = vscode.workspace.getConfiguration("lintit");
+		if (configuration.hasOwnProperty('extensions')) {
+			for (const extension of configuration.extensions) {
+				if (path.extname(filename).toUpperCase() === extension.toUpperCase()) {
+					return true;
+				}
+			}
+	
+			return false;
+		}
+	
+		return (path.extname(filename).toUpperCase() === '.c'.toUpperCase());
+	}
+	
 	private lintDocument(textDocument: vscode.TextDocument): Promise<Map<string, vscode.Diagnostic[]>> {
 		return new Promise((resolve, reject) => {
 			console.log('lintDocument: ' + textDocument.fileName);
@@ -160,7 +175,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 	}
 
 	private doLint(textDocument: vscode.TextDocument) {
-		if (textDocument.languageId !== 'c') {
+		if (!this.isFileLintable(textDocument.fileName)) {
 			return;
 		}
 

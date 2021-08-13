@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.1
+
+- Added setting for the file extensions to include in the scan
+
 ## 0.3.0
 
 - Changed the settings to allow for multiple configurations to be done per source folders.
