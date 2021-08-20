@@ -145,7 +145,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 							return;
 						}
 
-						var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/igm;
+						var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info|Supplemental).([0-9]*):.(.*)/igm;
 						var result = re.exec(line);
 						if (result !== null && result.length > 5) {
 							let uri = vscode.Uri.file(result[1]).fsPath;
@@ -215,7 +215,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 						return;
 					}
 
-					var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/igm;
+					var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info|Supplemental).([0-9]*):.(.*)/igm;
 					var result = re.exec(line);
 					if (result !== null && result.length > 5) {
 						let uri = vscode.Uri.file(result[1]).fsPath;
@@ -355,7 +355,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 							return;
 						}
 
-						var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/igm;
+						var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info|Supplemental).([0-9]*):.(.*)/igm;
 						var result = re.exec(line);
 						if (result !== null && result.length > 5) {
 							let uri = vscode.Uri.file(result[1]).fsPath;
@@ -419,7 +419,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 						return;
 					}
 
-					var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info).([0-9]*):.(.*)/igm;
+					var re = /^(.*)\(([0-9]*)\):.(Error|Warning|Notice|Note|Info|Supplemental).([0-9]*):.(.*)/igm;
 					var result = re.exec(line);
 					if (result !== null && result.length > 5) {
 						let uri = vscode.Uri.file(result[1]).fsPath;

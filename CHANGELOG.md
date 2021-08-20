@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.4
+
+- Added the detection of supplemental messages.
+
 ## 0.3.3
 
 - Fixed issue where the regex string comparision was not picking up the PC-Lint Plus messages.
