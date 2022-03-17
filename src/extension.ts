@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import * as ch from 'child_process';
+import * as config from './configuration';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import * as pathExtension from './pathExtension';
 import pcLintProvider from './pcLintProvider';
 
 let numberOfIssues = 0;
@@ -56,7 +59,7 @@ function lintFiles(workspaceFolder: string, channel: vscode.OutputChannel) {
 			channel.appendLine('Total PC-Lint Warnings: ' + numberOfIssues);
 		})
 		.catch(reason => {
-			vscode.window.showInformationMessage(reason);
+			vscode.window.showInformationMessage(reason, {modal: true});
 		});
 }
 
@@ -67,7 +70,7 @@ function lintConfiguration(configuration: any, workspaceFolder: string, promises
 }
 
 function lintFolder(folder: string, configuration: any, workspaceFolder: string, promises: Promise<string[]>[]) {
-	let absolutePath = normalizePath(folder);
+	let absolutePath = pathExtension.normalizePath(folder);
 
 	let files = fs.readdirSync(absolutePath, { withFileTypes: true });
 
@@ -77,16 +80,6 @@ function lintFolder(folder: string, configuration: any, workspaceFolder: string,
 		} else if (isFileLintable(configuration, file.name)) {
 			promises.push(executeLint(path.join(absolutePath, file.name), configuration));
 		}
-	}
-}
-
-function normalizePath(pathText: string): string {
-	let workspaceFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
-	if (pathText.startsWith('${workspaceFolder')) {
-		let absolutePath = pathText.replace('${workspaceFolder}', workspaceFolder);
-		return absolutePath.replace('/', '\\');
-	} else {
-		return pathText.replace('/', '\\');
 	}
 }
 
@@ -111,18 +104,18 @@ async function executeLint(documentName: string, configuration: any): Promise<st
 		let output: string[] = [];
 		output.push('Linting file ' + documentName + ':');
 		let decoded = '';
-		let childProcess = ch.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
+		let childProcess = ch.spawn(config.getPcLintPath(), args, options);
 	
 		childProcess.on('error', (error: Error) => {
 			console.log(error);
-			reject(`Cannot Lint the file ` + documentName);
+			reject(`Cannot Lint the file ` + documentName + os.EOL + error);
 		});
 		if (childProcess.pid) {
 			childProcess.stdout.on('data', (data: Buffer) => {
 				decoded += data;
 			});
 			childProcess.stdout.on('end', () => {
-				var lines = decoded.split("\r\n");
+				var lines = decoded.split(os.EOL);
 				for (let index = 0; index < lines.length; index++) {
 					const line = lines[index];
 
@@ -144,15 +137,15 @@ async function executeLint(documentName: string, configuration: any): Promise<st
 function getLintArgs(documentName: string, configuration: any) {
 	let args = ['-elib(0)', '+ffn', '-width(0)', '-hf1', '-u', '-"format=%f(%l): %t %n: %m"'];
 	configuration.includeFolders.forEach((folder: string) => {
-		args.push('-i"' + normalizePath(folder) + '"');
+		args.push('-i"' + pathExtension.normalizePath(folder) + '"');
 	});
 	if (configuration.hasOwnProperty('libraryIncludeFolders')) {
 		configuration.libraryIncludeFolders.forEach((folder: string) => {
-			args.push('+libdir("' + normalizePath(folder) + '")');
+			args.push('+libdir("' + pathExtension.normalizePath(folder) + '")');
 		});
 	}
 	configuration.lintFiles.forEach((lntFile: string) => {
-		args.push('"' + normalizePath(lntFile) + '"');
+		args.push('"' + pathExtension.normalizePath(lntFile) + '"');
 	});
 	args.push(documentName);
 
@@ -171,7 +164,7 @@ function lintFilesLegacy(workspaceFolder: string, channel: vscode.OutputChannel)
 		decoded += data;
 	});
 	process.on('close', (code: number) => {
-		var lines = decoded.split("\r\n");
+		var lines = decoded.split(os.EOL);
 		var count = 0;
 		lines.forEach(line => {
 			if ((line.trim() === "") || (line.startsWith('---'))) {

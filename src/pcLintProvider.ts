@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
+import * as config from './configuration';
 import * as cp from 'child_process';
-import * as process from 'process';
+import * as os from 'os';
 import * as path from 'path';
+import * as pathExtension from './pathExtension';
 import { Mutex } from 'async-mutex';
 
 export default class pcLintProvider implements vscode.CodeActionProvider {
@@ -130,7 +132,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 			let options = { cwd: path.dirname(fileName) };
 			let args = this.getLintArgs(textDocument);
 	
-			let childProcess = cp.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
+			let childProcess = cp.spawn(config.getPcLintPath(), args, options);
 			childProcess.on('error', (error: Error) => {
 				reject(error);
 			});
@@ -139,7 +141,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 					decoded += data;
 				});
 				childProcess.stdout.on('end', () => {
-					var lines = decoded.split("\r\n");
+					var lines = decoded.split(os.EOL);
 					lines.forEach(line => {
 						if (line.trim() === "") {
 							return;
@@ -199,7 +201,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		let options = { cwd: path.dirname(fileName) };
 		let args = this.getLintArgs(textDocument);
 
-		let childProcess = cp.spawn(vscode.workspace.getConfiguration("lintit").pcLintLocation, args, options);
+		let childProcess = cp.spawn(config.getPcLintPath(), args, options);
 		childProcess.on('error', (error: Error) => {
 			console.log(error);
 			vscode.window.showInformationMessage(`Cannot Lint the c file.`);
@@ -209,7 +211,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 				decoded += data;
 			});
 			childProcess.stdout.on('end', () => {
-				var lines = decoded.split("\r\n");
+				var lines = decoded.split(os.EOL);
 				lines.forEach(line => {
 					if (line.trim() === "") {
 						return;
@@ -280,7 +282,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 
 	private isFileInFolders(fileName: string, sourceFolders: any): boolean {
 		for (const folder of sourceFolders) {
-			let normalizedPath = this.normalizePath(folder);
+			let normalizedPath = pathExtension.normalizePath(folder);
 			if (fileName.toUpperCase().startsWith(normalizedPath.toUpperCase())) {
 				return true;
 			}
@@ -293,15 +295,15 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 		let args = ['-elib(0)', '+ffn', '-width(0)', '-hf1', '-u', '-"format=%f(%l): %t %n: %m"'];
 		var settings = this.getConfiguration(textDocument);
 		settings.includeFolders.forEach((folder: string) => {
-			args.push('-i"' + this.normalizePath(folder) + '"');
+			args.push('-i"' + pathExtension.normalizePath(folder) + '"');
 		});
 		if (settings.hasOwnProperty('libraryIncludeFolders')) {
 			settings.libraryIncludeFolders.forEach((folder: string) => {
-				args.push('+libdir("' + this.normalizePath(folder) + '")');
+				args.push('+libdir("' + pathExtension.normalizePath(folder) + '")');
 			});
 		}
 		settings.lintFiles.forEach((lntFile: string) => {
-			args.push('"' + this.normalizePath(lntFile) + '"');
+			args.push('"' + pathExtension.normalizePath(lntFile) + '"');
 		});
 		args.push(this.getActualFileName(textDocument));
 
@@ -319,15 +321,6 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 			if (this.isFileInFolders(this.getActualFileName(textDocument), configuration.sourceFolders)) {
 				return configuration;
 			}
-		}
-	}
-
-	private normalizePath(pathText: string): string {
-		if (pathText.startsWith('${workspaceFolder')) {
-			let absolutePath = pathText.replace('${workspaceFolder}', this.workspaceFolder);
-			return absolutePath.replace('/', '\\');
-		} else {
-			return pathText.replace('/', '\\');
 		}
 	}
 
@@ -349,7 +342,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 					decoded += data;
 				});
 				childProcess.stdout.on('end', () => {
-					var lines = decoded.split("\r\n");
+					var lines = decoded.split(os.EOL);
 					lines.forEach(line => {
 						if (line.trim() === "") {
 							return;
@@ -413,7 +406,7 @@ export default class pcLintProvider implements vscode.CodeActionProvider {
 				decoded += data;
 			});
 			childProcess.stdout.on('end', () => {
-				var lines = decoded.split("\r\n");
+				var lines = decoded.split(os.EOL);
 				lines.forEach(line => {
 					if (line.trim() === "") {
 						return;

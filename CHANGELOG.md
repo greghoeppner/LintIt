@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.0
+
+- Added support for Linux.
+- Added support for using ${workspaceFolder} in the PC-Lint executable path.
+
 ## 0.3.4
 
 - Added the detection of supplemental messages.
